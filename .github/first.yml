@@ -1,0 +1,37 @@
+name: Terraform Apply
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v1
+
+    - name: Terraform Init
+      run: terraform init
+
+    - name: Terraform Apply
+      run: terraform apply -auto-approve
+
+    - name: Capture Terraform Output
+      id: capture
+      run: terraform output -json > output.json
+
+    - name: Display Output File
+      run: cat output.json
+
+    - name: Extract DMS Endpoint ARN
+      id: extract
+      run: echo "::set-output name=dms_endpoint_arn::$(jq -r '.dms_endpoint_arn.value' output.json)"
+
+    - name: Use DMS Endpoint ARN
+      run: echo "The DMS Endpoint ARN is ${{ steps.extract.outputs.dms_endpoint_arn }}"
